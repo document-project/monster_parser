@@ -1,0 +1,5 @@
+abilities:
+- name: Nimble Escape
+tags:
+- goblinoid
+type: humanoid

@@ -1,0 +1,69 @@
+legendary-actions: >
+ The [name] can take [uses] legendary actions, choosing from the options below. Only one legendary action can be used at a time, and
+ only at the start of another creature's turn. The [name] regains spent legendary actions at the start of its turn.
+lair-actions: >
+ On initiative count 20 (losing initiative ties), the [name] can take one of the following lair actions. The [name] can't
+ take the same lair action two rounds in a row:
+regional-effects: >
+ The region containing a legendary [possessive [name]] lair is warped by the [possessive [name]] magic, creating one or more of the
+ following effects:
+spellcasting: >
+ The [name] is a [format_index [level]]-level spellcaster. Its spellcasting ability is [ability] (spell save DC
+ [save_dc], spell attack bonus [attack_bonus]). The [name] has the following spells prepared:
+innate-spellcasting: >
+ The [possessive [name]] spellcasting ability is [ability] (spell save DC [save_dc], spell attack bonus [attack_bonus]).
+ The [name] can cast the following spells, requiring no material components:
+Spider Climb: >
+ The [name] can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.
+Nimble Escape: The [name] can take the Disengage or Hide action as a bonus action on each of its turns.
+Sunlight Sensitivity: >
+ While in sunlight, the [name] has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight.
+Legendary Resistance: If the [name] fails a saving throw, it can choose to succeed instead.
+Avoidance: > 
+ If the [name] is subject to an effect that allows it to make a Dexterity saving throw to take only half damage, it instead takes
+ no damage if it succeeds on the saving throw, and only half damage if it fails.
+Frightful Presence:
+ Each creature of the [possessive [name]] choice that is within 120 feet and aware of it must succeed on a [save w/wis cha] or become
+ frightened for 1 minute. A creature repeats the saving throw at the end of each of its turns, ending the effect on itself on a success.
+ If the creature's saving throw is successful or the effect ends for it, the creature is immune to the [possessive [name]] Frightful
+ Presence for the next 24 hours.
+Earthwalk: The [name] can walk through unworked earth as if it were air, leaving no trace of its passage.
+Siege Monster: The [name] deals double damage to structures.
+Swarm: >
+ The [name] can fit through any gap large enough for a [swarmsize] creature, cannot regain hit points or gain temporary hit points,
+ takes twice as much damage from area-of-effect sources, can enter the spaces of other creatures, and other creatures can enter the
+ swarm's space.
+Rooted: The [name] has advantage on saving throws made to resist being moved or knocked prone.
+Stench: >
+ Any creature other than [articulate f [name]] that starts its turn within 5 feet of the [name] must succeed on a [save w/con con],
+ being poisoned until the start of the creature's next turn. On a successful saving throw, the creature is immune to the stench of all
+ [name]s for 1 hour.
+Amphibious: The [name] can breathe both air and water with equal ease.
+Aquatic: The [name] can only breathe underwater.
+Pack Tactics: >
+ The [name] has advantage on an attack roll against a creature if at least one of the [possessive [name]] allies is within 5 feet of the
+ creature and the ally isn't incapacitated.
+Magic Resistance: The [name] has advantage on saving throws to resist spells and other magical effects.
+Immutable Form: The [name] is immune to spells and other effects that would alter its form.
+Parry: >
+ The [name] adds [profbonus] to its AC against one melee attack that would hit it. In order to do so, the [name] must see the attacker and
+ be wielding a weapon.
+Web Sense: While in contact with a web, the [name] knows the exact location of any other creature in contact with the same web.
+Web Walker: The [name] ignores movement restrictions caused by webbing.
+Damage Transfer: >
+ While the [name] is attached to a creature, it takes half damage from all attacks directed against it, and the creature it is attached
+ to takes the other half.
+Amorphous: The [name] can move through a space as narrow as 1 inch wide without squeezing.
+Shadow Stealth: While in dim light or darkness, the [name] can take the hide action as a bonus action.
+Keen Hearing: The [name] has advantage on Wisdom (Perception) checks that rely on hearing.
+Keen Smell: The [name] has advantage on Wisdom (Perception) checks that rely on smell.
+Echolocation: The [name] cannot use its blindsight while deafened, or if it is incapable of making noise.
+Magic Weapons: The [possessive [name]] weapon attacks are magical.
+Plant Stride: The [possessive [name]] movement is never restricted by plant growth.
+Slippery: The [name] has advantage on ability checks and saving throws made to escape a grapple.
+Two Heads: >
+ The [name] has advantage on Wisdom (Perception) checks and on saving throws against being blinded, deafened, frightened,
+ stunned, and knocked unconscious.
+Dive Attack: >
+ If the [name] is flying and dives at least 30 feet straight towards a target and then hits it with a melee weapon attack, the
+ attack deals an extra [roll 1 6] damage to the target.

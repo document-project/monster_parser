@@ -1,0 +1,6 @@
+abilities:
+- name: Sunlight Sensitivity
+- name: Pack Tactics
+type: humanoid
+tags:
+- kobold
