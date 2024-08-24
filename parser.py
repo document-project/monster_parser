@@ -11,10 +11,14 @@ NEWLINE = "\\\\"
 LINEBREAK = "\\bigskip"
 PAGEBREAK = "\n\\clearpage\n"
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+SET_TO_LOAD = ""
 
 monsters_by_habitat = {}
 monsters_by_type = {}
 monsters_by_cr = {}
+spells_by_class = {}
+spells_by_level = {}
+spells_by_school = {}
 errors = []
 appendicies = {}
 appendix_count = 0
@@ -23,15 +27,14 @@ monster_count = 0
 
 def add_appendix(name, contents):
     global appendicies, appendix_count
-    appendicies["Appendix " + ALPHABET[appendix_count] + ": " + name] = contents
+    appendicies[f"Appendix {ALPHABET[appendix_count]}: {name}"] = contents
     appendix_count += 1
 
 
 def entry(header, body):
-    body = body.replace("\n", "")
-    if body.endswith("}"):
+    if body.endswith("}\n"):
         for string in NO_NEWLINE_TRIGGERS:
-            if body.endswith(string):
+            if body.endswith(string + "\n"):
                 return "\\entrynonewline{" + header + "}{" + body + "}"
     return "\\entry{" + header + "}{" + body + "}"
 # The entrynonewline is required to avoid LaTeX errors for having
@@ -49,7 +52,7 @@ def partition(title):
 def ac(dex, bonus, reasons):
     ac_string = str(10 + dex + bonus)
     if len(reasons) > 0:
-        ac_string += " (" + pp.comma_separate(reasons) + ")"
+        ac_string += f" ({pp.comma_separate(reasons)})"
     return ac_string
 
 
@@ -99,7 +102,7 @@ def create_stat_table(scores, bonuses):
             table += "&"
     table += NEWLINE
     for ability in ABILITY_LIST:
-        table += str(scores[ability]) + " (" + brand.format_bonus(bonuses[ability]) + ")"
+        table += f"{scores[ability]} ({brand.format_bonus(bonuses[ability])})"
         if ability != "cha":
             table += "&"
     table += NEWLINE + NEWLINE + """\\hline
@@ -117,28 +120,31 @@ def create_attack(attack, params):
         bonus += attack["bonus"]
     if attack["type"] == "mw":
         attack_string += "Melee Weapon Attack:} "
-        attack_string += brand.format_bonus(bonus) + " to hit, reach " + str(pp.get_key_if_exists(attack, "reach", 5)) + " ft."
+        attack_string += f"{brand.format_bonus(bonus)} to hit, reach {pp.get_key_if_exists(attack, "reach", 5)} ft."
     elif attack["type"] == "rw":
         attack_string += "Ranged Weapon Attack:} "
-        attack_string += brand.format_bonus(bonus) + " to hit, range " + str(attack["range"]) + " ft."
+        attack_string += f"{brand.format_bonus(bonus)} to hit, range {attack["range"]} ft."
     elif attack["type"] == "ms":
         attack_string += "Melee Spell Attack:} "
-        attack_string += brand.format_bonus(bonus) + " to hit, reach " + str(pp.get_key_if_exists(attack, "reach", 5)) + " ft."
+        attack_string += f"{brand.format_bonus(bonus)} to hit, reach {pp.get_key_if_exists(attack, "reach", 5)} ft."
     elif attack["type"] == "rs":
         attack_string += "Ranged Spell Attack:} "
-        attack_string += brand.format_bonus(bonus) + " to hit, range " + str(attack["range"]) + " ft."
+        attack_string += f"{brand.format_bonus(bonus)} to hit, range {attack["range"]} ft."
     elif attack["type"] == "m/rw":
         attack_string += "Melee or Ranged Weapon Attack:} "
-        attack_string += brand.format_bonus(bonus) + " to hit, reach " + str(pp.get_key_if_exists(attack, "reach", 5)) + " ft. or range "
-        attack_string += str(attack["range"]) + " ft."
+        attack_string += f"{brand.format_bonus(bonus)} to hit, reach {pp.get_key_if_exists(attack, "reach", 5)} ft. or range {attack["range"]} ft."
     else:
-        errors.append("unknown attack type \"" + attack["type"] + "\"")
+        errors.append('unknown attack type "' + attack["type"] + '"')
         
-    attack_string += ", " + pp.get_key_if_exists(attack, "target", "one target") + "." + NEWLINE + "\\textit{Hit:} "
+    attack_string += f", {pp.get_key_if_exists(attack, "target", "one target")}.{NEWLINE}" + "\\textit{Hit:} "
     attack_string += brand.eval_string(attack["onhit"], params)
     if "special" in attack:
         attack_string += NEWLINE + brand.eval_string(attack["special"], params)
-    return entry(attack["name"], attack_string)
+    
+    attack_header = attack["name"]
+    if "uses" in attack:
+        attack_header += f" ({attack["uses"].title()})"
+    return entry(attack_header, attack_string)
 
 
 def dmg_attributes(attributes):
@@ -196,7 +202,7 @@ def spellcasting(slot_type, level, spells, params):
         slot_num = slots[i]
         string += NEWLINE + "\\textbf{" + brand.format_index(i + 1) + " Level"
         if slot_num != 0:
-            string += " (" + str(slot_num) + " slots)"
+            string += f" ({slot_num} slots)"
         string += ":} " + brand.spell(pp.comma_separate(sorted(spells[i + 1])))
     return entry("Spellcasting", string)
 
@@ -223,14 +229,14 @@ def innate_spellcasting(spellcasting, params):
 
 
 def speeds(speed_dict):
-    speed_string = str(speed_dict["land"]) + " ft."
+    speed_string = f"{speed_dict["land"]} ft."
     speed_type_list = sorted(speed_dict)
     for speed_type in speed_type_list:
         if speed_type != "land":
             if speed_type == "fly-hover":
-                speed_string += ", fly " + str(speed_dict[speed_type]) + " ft. (hover)"
+                speed_string += f", fly {speed_dict[speed_type]} ft. (hover)"
             else:
-                speed_string += ", " + speed_type + " " + str(speed_dict[speed_type]) + " ft."
+                speed_string += f", {speed_type} {speed_dict[speed_type]} ft."
     return speed_string
 
 
@@ -239,7 +245,7 @@ def check_missing_fields(monster):
     error = False
     monster_name = ""
     if not "name" in monster:
-        print("ERROR: " + "Unnamed monster!")
+        print("ERROR: Unnamed monster!")
         error = True
     else:
         monster_name = monster["name"]
@@ -278,10 +284,10 @@ def format_actions(actions, params, key="effect"):
         if action_name in ability_effects and not key in action:
             action[key] = ability_effects[action_name]
         if "uses" in action:
-            action_name += " (" + action["uses"].title() + ")"
+            action_name += f" ({action["uses"].title()})"
         # the "cost" clause is for legendary actions
         elif "cost" in action:
-            action_name += " (Costs " + str(action["cost"]) + " Actions)"
+            action_name += f" (Costs {action["cost"]} Actions)"
         action_string += entry(action_name, brand.eval_string(action[key], params)) + LINEBREAK
     return action_string
 
@@ -294,13 +300,13 @@ def variants(diffs, params):
     return partition("Variants") + format_actions(diffs, params, key="mods")
 
 
-def description(descriptions, monster_type, name, include_default=True):
+def description(descriptions, monster_type, params, include_default=True):
     string = ""
     if monster_type in tables.NATURES and include_default:
         descriptions.append(tables.NATURES[monster_type].copy())
     for description in descriptions:
         if type(description["header"]) != type(None) and type(description["text"]) != type(None):
-            description["text"] = brand.eval_string(description["text"], {"name":name})
+            description["text"] = brand.eval_string(description["text"], params)
             string += entry(description["header"], description["text"])
     return string
 
@@ -372,7 +378,7 @@ def format_languages(languages):
             else:
                 string += ", "
         if language.startswith("telepathy"):
-            string  += "T" + language[1:]
+            string += f"T{language[1:]}"
             if language.endswith("ft"):
                 string += "."
         else:
@@ -384,7 +390,7 @@ def languages(langs):
     string = ""
     if len(langs) > 0:
         if langs[0] == "nospeak":
-            string += "understands " + format_languages(langs[1:]) + " but cannot speak"
+            string += f"understands {format_languages(langs[1:])} but cannot speak"
         else:
             string += format_languages(langs)
     else:
@@ -400,17 +406,23 @@ def senses(monster_senses, perception_bonus):
             if sense.endswith("ft"):
                 string += "."
             string += ", "
-    string += "passive Perception " + str(10 + perception_bonus)
+    string += f"passive Perception {10 + perception_bonus}"
     return string
 
 
 def create_spell(spell, include=False):
+    if pp.get_key_if_exists(spell, "set", "") != SET_TO_LOAD:
+        return ""
+
     string = ""
+    spell_name = spell["name"]
+    print("compiling", spell_name)
     if include:
-        string += "\\textbf{" + spell["name"] + "}" + NEWLINE
+        string += "\\textbf{" + spell_name + "}" + NEWLINE
     else:
-        string += create_header(spell["name"])
-    string += "\\textit{" + brand.format_index(int(spell["level"])) + "-level " + spell["school"].lower()
+        string += create_header(spell_name)
+        add_spell_to_appendices(spell)
+    string += "\\textit{" + f"{brand.format_index(int(spell["level"]))}-level {spell["school"].lower()}"
     if "ritual" in spell:
         string += ", ritual"
     string += "}" + NEWLINE
@@ -419,7 +431,7 @@ def create_spell(spell, include=False):
     string += "\\textbf{Components:} " + spell["components"] + NEWLINE
     string += "\\textbf{Duration:} " + spell["duration"] + NEWLINE
     if "classes" in spell:
-        string += "\\textbf{Classes:} " + pp.comma_separate(spell["classes"]).title() + NEWLINE
+        string += "\\textbf{Classes:} " + pp.comma_separate(sorted(spell["classes"])).title() + NEWLINE
     string += brand.eval_string(spell["effect"], {}) + NEWLINE
     if "higher_levels" in spell:
         string += entry("At Higher Levels", brand.eval_string(spell["higher_levels"], {}))
@@ -427,33 +439,47 @@ def create_spell(spell, include=False):
 
 
 def create_item(item, include=False):
+    if pp.get_key_if_exists(item, "set", "") != SET_TO_LOAD:
+        return ""
+    
     string = ""
     if include:
         string += "\\textbf{" + item["name"] + "}" + NEWLINE
     else:
         string += create_header(item["name"])
+    
+    if "flavor" in item:
+        string += "\\textit{" + item["flavor"] + "}" + NEWLINE
+
     string += item["type"]
     if "tags" in item:
-        string += " (" + pp.comma_separate(item["tags"]) + ")"
-    string += ", " + item["rarity"]
+        string += f" ({pp.comma_separate(item["tags"])})"
+    string += f", {item["rarity"]}"
     if "attunement" in item:
         string += " (requires attunement"
         if type(item["attunement"]) == str:
             string += item["attunement"]
         string += ")"
+    
     string += NEWLINE + brand.eval_string(item["properties"], {})
+
     if "curse" in item:
         string += NEWLINE + entry("Curse", brand.eval_string(item["curse"], {}))
+    
     if "destruction" in item:
         string += NEWLINE + entry("Destruction", brand.eval_string(item["destruction"], {}))
+    
     return string
 
 
-def create_monster(monster, title=True, addtoc=True, count=True):
+def create_monster(monster, title=True, addtoc=True, count=True, include=False):
     global ability_effects, monster_count
 
+    if pp.get_key_if_exists(monster, "set", "") != SET_TO_LOAD:
+        return ""
+
     if "trait_set" in monster:
-        monster = pp.combine_dictionaries(monster, pp.open_yaml("trait_sets/" + monster["trait_set"] + ".yaml", show=False), [])
+        monster = pp.combine_dictionaries(monster, pp.open_yaml(f"trait_sets/{monster["trait_set"]}.yaml", show=False), [])
 
     if check_missing_fields(monster):
         return ""
@@ -461,9 +487,9 @@ def create_monster(monster, title=True, addtoc=True, count=True):
     monster_string = ""
     header_name = pp.headername(monster)
     short_name = pp.shortname(monster)
-    plainname = monster["name"]
+    plain_name = monster["name"]
 
-    print("compiling", plainname)
+    print("compiling", plain_name)
     if count:
         monster_count += 1
 
@@ -478,21 +504,26 @@ def create_monster(monster, title=True, addtoc=True, count=True):
     if "params" in monster:
         for param in monster["params"]:
             params[param] = monster["params"][param]
-    monster_string += create_header(header_name, title=title, addtoc=addtoc)
+    
+    if include:
+        monster_string += "\\textbf{" + header_name + "}" + NEWLINE
+    else:
+        monster_string += create_header(header_name, title=title, addtoc=addtoc)
+        add_monster_to_appendices(monster)
 
     if "flavor" in monster and type(monster["flavor"]) != type(None):
         monster_string += "\\textit{" + monster["flavor"] + "}" + NEWLINE + LINEBREAK
 
     if "description" in monster:
-        monster_string += description(monster["description"], monster["type"], short_name) + LINEBREAK
+        monster_string += description(monster["description"], monster["type"], params) + LINEBREAK
 
-    monster_string += "\\textbf{" + plainname.upper() + "}" + NEWLINE
-    alignment = "unaligned"
-    if "alignment" in monster:
-        alignment = monster["alignment"]
+    if not include:
+        monster_string += "\\textbf{" + plain_name.upper() + "}" + NEWLINE
+    alignment = pp.get_key_if_exists(monster, "alignment", "unaligned")
     if "swarm" in monster:
-        monster_string += "\\textit{" + monster["size"].title() + " Swarm of " + (monster["swarm"] + " " + monster["type"]).title() + "s"
-        swarm_ability = ability_effects["Swarm"].replace("[name]", short_name).replace("[swarmsize]", monster["swarm"].title())
+        monster_string += "\\textit{" + monster["size"].title() + " Swarm of "
+        monster_string += brand.plural(monster["swarm"] + " " + monster["type"]).title() + "s"
+        swarm_ability = brand.eval_string(ability_effects["Swarm"], {"name":short_name, "swarmsize":monster["swarm"].title()})
         if "abilities" in monster:
             swarm_override = False
             for ability in monster["abilities"]:
@@ -506,7 +537,7 @@ def create_monster(monster, title=True, addtoc=True, count=True):
     else:
         monster_string += "\\textit{" + (monster["size"] + " " + monster["type"]).title()
     if "tags" in monster:
-        monster_string += " (" + pp.comma_separate(sorted(monster["tags"])) + ")"
+        monster_string += f" ({pp.comma_separate(sorted(monster["tags"]))})"
     monster_string +=  ", " + alignment.title() + "}" + NEWLINE
 
     acbonus = 0
@@ -596,35 +627,53 @@ def create_monster(monster, title=True, addtoc=True, count=True):
     if "lair" in monster:
         monster_string += lair(monster["lair"], params)
     
-    monster_string += "\\label{End " + header_name + "}"
-    
-    add_to_appendices(monster)
     return monster_string
 
 
-def add_to_appendices(monster):
-    monstername = pp.headername(monster)
-    if "habitat" in monster and type(monster["habitat"][0]) != type(None):
+def add_monster_to_appendices(monster):
+    monster_name = pp.headername(monster)
+    if "habitat" in monster and type(monster["habitat"][0]) != type(None) and monster["habitat"][0] != "none":
         for region in monster["habitat"]:
             if region in monsters_by_habitat:
-                monsters_by_habitat[region].append(monstername)
+                monsters_by_habitat[region.title()].append(monster_name)
             else:
-                monsters_by_habitat[region] = [monstername]
+                monsters_by_habitat[region.title()] = [monster_name]
     elif "any" in monsters_by_habitat:
-        monsters_by_habitat["any"].append(monstername)
+        monsters_by_habitat["Any"].append(monster_name)
     else:
-        monsters_by_habitat["any"] = [monstername]
+        monsters_by_habitat["Any"] = [monster_name]
 
     monster_plural = tables.MONSTER_TYPE_PLURALS[monster["type"]]
     if monster_plural in monsters_by_type:
-        monsters_by_type[monster_plural].append(monstername)
+        monsters_by_type[monster_plural.title()].append(monster_name)
     else:
-        monsters_by_type[monster_plural] = [monstername]
+        monsters_by_type[monster_plural.title()] = [monster_name]
     monster_cr = pp.cr_to_digit(monster["cr"])
     if monster_cr in monsters_by_cr:
-        monsters_by_cr[monster_cr].append(monstername)
+        monsters_by_cr[monster_cr].append(monster_name)
     else:
-        monsters_by_cr[monster_cr] = [monstername]
+        monsters_by_cr[monster_cr] = [monster_name]
+
+
+def add_spell_to_appendices(spell):
+    spell_name = pp.headername(spell)
+    for character_class in pp.get_key_if_exists(spell, "classes", []):
+        if character_class.title() in spells_by_class:
+            spells_by_class[character_class.title()].append(spell_name)
+        else:
+            spells_by_class[character_class.title()] = [spell_name]
+    
+    level = brand.format_index(spell["level"]) + " Level"
+    if level in spells_by_level:
+        spells_by_level[level].append(spell_name)
+    else:
+        spells_by_level[level] = [spell_name]
+    
+    school = spell["school"].title()
+    if school in spells_by_school:
+        spells_by_school[school].append(spell_name)
+    else:
+        spells_by_school[school] = [spell_name]
 
 
 def resolve_group(group, monsters):
@@ -638,7 +687,7 @@ def resolve_group(group, monsters):
     if "description" in group:
         group_type = pp.get_key_if_exists(group, "type", "")
         group_shortname = pp.shortname(group)
-        group_string += description(group["description"], group_type, group_shortname, include_default=not title) + LINEBREAK
+        group_string += description(group["description"], group_type, {"name":group_shortname}, include_default=not title) + LINEBREAK
 
     monster_dict = {}
     if "sorttype" in group:
@@ -648,7 +697,7 @@ def resolve_group(group, monsters):
         elif group["sorttype"] == "index":
             for monster in monsters:
                 if monster["sortindex"] in monster_dict:
-                    errors.append("duplicate indicies in group " + group["name"])
+                    errors.append(f"duplicate indicies in group {group["name"]}")
                 else:
                     monster_dict[monster["sortindex"]] = monster
         
@@ -666,7 +715,7 @@ def resolve_group(group, monsters):
     if "lair" in group:
         group_string += lair(group["lair"], {"name":group["name"]})
     
-    return "\\clearpage" + group_string
+    return f"\\clearpage{group_string}"
 
 
 def create_appendix_table(table, header):
@@ -675,8 +724,8 @@ def create_appendix_table(table, header):
         section_name = section
         if type(section) != str:
             # assume it's a CR table
-            section_name = "Challenge Rating " + pp.cr_to_string(section)
-        string += "\\textbf{" + section_name.title() + "}" + NEWLINE
+            section_name = f"Challenge Rating {pp.cr_to_string(section)}"
+        string += "\\textbf{" + section_name + "}" + NEWLINE
         for entry in sorted(table[section]):
             string += entry + "\\hfill p.\\pageref{" + entry + "}" + NEWLINE
         string += LINEBREAK
@@ -705,15 +754,15 @@ def create_monster_block():
         group_name_map[group["name"]] = pp.headername(group)
     
     for monster in pp.get_yaml_from_directory(SOURCE_YAML_DIRECTORY):
-        monstername = pp.headername(monster)
+        monster_name = pp.headername(monster)
         if "group" in monster:
             monster_name_dict[group_name_map[monster["group"]]].append(monster)
         else:
-            monster_name_dict[monstername] = monster
+            monster_name_dict[monster_name] = monster
 
     current_alphabet_letter = ""
     for monster_name in sorted(monster_name_dict):
-        if monster_name[0] != current_alphabet_letter:
+        if monster_name[0].upper() != current_alphabet_letter:
             current_alphabet_letter = monster_name[0]
             string += add_contents_line(current_alphabet_letter)
         if type(monster_name_dict[monster_name]) == list:
@@ -731,6 +780,38 @@ def create_monster_block():
     add_appendix("Monsters by Habitat", monsters_by_habitat)
     add_appendix("Monsters by Type", monsters_by_type)
 
+    print(monster_count, "monsters total")
+
+    return string
+
+
+def create_spell_block():
+    string = "\\addcontentsline{toc}{section}{Spells}"
+
+    spell_name_dict = {}
+    for spell in pp.get_yaml_from_directory("spells"):
+        spell_name_dict[pp.headername(spell)] = spell
+    
+    for spell_name in sorted(spell_name_dict):
+        string += create_spell(spell_name_dict[spell_name])
+    
+    add_appendix("Spells by Class", spells_by_class)
+    add_appendix("Spells by Level", spells_by_level)
+    add_appendix("Spells by School", spells_by_school)
+
+    return string
+
+
+def create_item_block():
+    string = "\\addcontentsline{toc}{section}{Items}"
+
+    item_name_dict = {}
+    for item in pp.get_yaml_from_directory("items"):
+        item_name_dict[pp.headername(item)] = item
+    
+    for item_name in sorted(item_name_dict):
+        string += create_item(item_name_dict[item_name])
+
     return string
 
 
@@ -742,6 +823,10 @@ def compile_document():
     for line in framework.readlines():
         if line == "%monsters\n":
             target.write(create_monster_block())
+        elif line == "%spells\n":
+            target.write(create_spell_block())
+        elif line == "%items\n":
+            target.write(create_item_block())
         elif line == "%appendicies\n":
             target.write(create_appendices())
         else:
@@ -752,10 +837,11 @@ def compile_document():
 
     for error in errors:
         print("ERROR: ", error)
-    print(monster_count, "monsters total, compiled in", str(time() - start)[0:5], "seconds")
+    print("compiled in", str(time() - start)[0:5], "seconds")
 
 
 brand.include_functions["spell"] = lambda filename: create_spell(pp.open_yaml(filename), include=True)
 brand.include_functions["item"] = lambda filename: create_item(pp.open_yaml(filename), include=True)
+brand.unquoted_include_functions["monster"] = lambda filename: create_monster(pp.open_yaml(filename), include=True, count=False)
 ability_effects = pp.open_yaml("abilities.yaml")
 compile_document()

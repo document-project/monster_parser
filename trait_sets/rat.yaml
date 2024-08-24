@@ -1,0 +1,6 @@
+type: beast
+senses:
+- darkvision 60 ft
+abilities:
+- name: Keen Smell
+- name: Pack Tactics

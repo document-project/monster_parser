@@ -86,12 +86,12 @@ def combine_dictionaries(a, b, exclude):
                 for item in b[field]:
                     if field in a:
                         if type(item) == dict:
-                            if "n/" + item["name"] in a[field]:
-                                a[field].remove("n/" + item["name"])
+                            if f"n/{item["name"]}" in a[field]:
+                                a[field].remove(f"n/{item["name"]}")
                                 continue
                         elif type(item) == str:
-                            if "n/" + item in a[field]:
-                                a[field].remove("n/" + item)
+                            if f"n/{item}" in a[field]:
+                                a[field].remove(f"n/{item}")
                                 continue
                         a[field].append(item)
                     else:
@@ -99,6 +99,12 @@ def combine_dictionaries(a, b, exclude):
 
             elif type(b[field]) == str:
                 if not field in a:
+                    a[field] = b[field]
+            
+            elif type(b[field]) == dict:
+                if field in a:
+                    a[field] = combine_dictionaries(a[field], b[field], exclude)
+                else:
                     a[field] = b[field]
     return a
 

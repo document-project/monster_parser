@@ -9,9 +9,9 @@ regional-effects: >
  following effects:
 spellcasting: >
  The [name] is a [format_index [level]]-level spellcaster. Its spellcasting ability is [ability] (spell save DC
- [save_dc], spell attack bonus [attack_bonus]). The [name] has the following spells prepared:
+ [save_dc], spell attack bonus [format_bonus [attack_bonus]]). The [name] has the following spells prepared:
 innate-spellcasting: >
- The [possessive [name]] spellcasting ability is [ability] (spell save DC [save_dc], spell attack bonus [attack_bonus]).
+ The [possessive [name]] spellcasting ability is [ability] (spell save DC [save_dc], spell attack bonus [format_bonus [attack_bonus]]).
  The [name] can cast the following spells, requiring no material components:
 Spider Climb: >
  The [name] can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.

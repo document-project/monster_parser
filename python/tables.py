@@ -24,6 +24,12 @@ SEMI_SPELLCASTER = [
     lambda level : 0 if level < 13 else (1 if level < 15 else (2 if level < 17 else 3)),
     lambda level : 0 if level < 17 else (1 if level < 19 else 2)
 ]
+NON_SPELLCASTER = {
+    lambda level : 0 if level < 3 else (2 if level == 3 else (3 if level < 7 else 4)),
+    lambda level : 0 if level < 7 else (2 if level < 10 else 3),
+    lambda level : 0 if level < 13 else (2 if level < 16 else 3),
+    lambda level : 0 if level < 19 else 1 
+}
 WARLOCK = [
     lambda level : 1 if level == 1 else (2 if level == 2 else 0),
     lambda level : 2 if level > 2 and level < 5 else 0,
@@ -39,7 +45,9 @@ SPELL_SLOTS = {
     "ranger":SEMI_SPELLCASTER,
     "sorcerer":FULL_SPELLCASTER,
     "warlock":WARLOCK,
-    "wizard":FULL_SPELLCASTER
+    "wizard":FULL_SPELLCASTER,
+    "arcane trickster":NON_SPELLCASTER,
+    "eldritch knight":NON_SPELLCASTER
 }
 SPELLCASTING_ABILITY = {
     "bard":"cha",
@@ -49,7 +57,9 @@ SPELLCASTING_ABILITY = {
     "ranger":"wis",
     "sorcerer":"cha",
     "warlock":"cha",
-    "wizard":"int"
+    "wizard":"int",
+    "arcane trickster":"int",
+    "eldritch knight":"int"
 }
 DEFAULT_IMMUNITIES = {
     "elemental":[

@@ -3,3 +3,6 @@ abilities:
 tags:
 - goblinoid
 type: humanoid
+languages:
+- common
+- goblin

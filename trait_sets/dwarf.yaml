@@ -1,0 +1,17 @@
+type: humanoid
+tags:
+- dwarf
+size: medium
+speed:
+ land: 25
+resist:
+- poison
+languages:
+- common
+- dwarvish
+senses:
+- darkvision 60 ft
+abilities:
+- name: Dwarven Resilience
+  effect: >
+   The [name] has advantage on saving throws against poison.

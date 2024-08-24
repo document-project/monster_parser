@@ -1,5 +1,5 @@
-# BRAND CORE v.1.1.0
-# additional module: 5e v.1.0.0
+# BRAND CORE v.1.2.0
+# additional module: 5e v.1.1.0
 
 from math import floor
 import os
@@ -9,6 +9,7 @@ AUTOMATIC_VARIABLES = ["str", "dex", "con", "int", "wis", "cha"]
 NEWLINE = "\\\\"
 LINEBREAK = "\\bigskip"
 include_functions = {}
+unquoted_include_functions = {}
 ABILITIES_SPELLOUT = {
     "str":"Strength",
     "dex":"Dexterity",
@@ -101,7 +102,7 @@ def roll(num, size, *bonuses):
     for bonus in bonuses:
         total_bonus += bonus
     total = floor(num * (size / 2 + 0.5)) + total_bonus
-    string = str(total) + " (" + str(num) + "d" + str(size)
+    string = f"{total} ({num}d{size}"
     if total_bonus != 0:
         if total_bonus > 0:
             string += " + "
@@ -111,25 +112,32 @@ def roll(num, size, *bonuses):
     return string + ")"
 
 
-def index_plural(num, *name):
-    name = _separate(name)
-    string = str(num) + " " + name
-    if num != 1:
-        if name[-2:] in ["sh", "ch", "x"]:
+def plural(*name):
+    string = _separate(name)
+    if string[-2:] in ["sh", "ch", "x"]:
+        return string + "es"
+    elif string[-1] in ["s", "z"]:
+        if string[-2] == string[-1]:
             return string + "es"
-        elif name[-1] in ["s", "z"]:
-            if name[-2] == name[-1]:
-                return string + "es"
-            return string + name[-1] + "es"
-        return string + "s"
-    return string
+        return string + string[-1] + "es"
+    return string + "s"
+
+
+def index_plural(num, *name):
+    if num != 1:
+        return f"{num} {plural(*name)}"
+    return f"{num} {_separate(name)}"
 
 
 # adds all the inputs and returns them as a string
 def sum(*numbers):
     total = 0
     for number in numbers:
-        total += number
+        if type(number) == str:
+            if number.isdigit():
+                total += int(number)
+        elif type(number) == int:
+            total += number
     return str(total)
 
 
@@ -141,7 +149,7 @@ def articulate(capitalized, *name):
         string += "n"
     if capitalized:
         string = string.title()
-    return string + " " + name
+    return f"{string} {name}"
 
 
 # returns spellname in italics
@@ -171,7 +179,7 @@ def bolditalics(*stuff):
 
 # collects all parameters as a brand-recognized string group
 def bind(*stuff):
-    return "<" + _separate(stuff) + ">"
+    return f"<{_separate(stuff)}>"
 
 
 # returns a table mapping the roll of a die to ampersand-separated entries
@@ -234,8 +242,8 @@ def _get_list_body(items):
             list_body += "\\item " + entry
             entry = ""
         else:
-            entry += str(item) + " "
-    return list_body + "\\item " + entry
+            entry += f"{item} "
+    return f"{list_body}\\item {entry}"
 
 
 # Return array as string with each item separated by a given sequence
@@ -251,7 +259,7 @@ def _separate(array, spacer=" "):
 # Returns a number as a string with proper sign indication
 def format_bonus(bonus):
     if bonus >= 0:
-        return "+" + str(bonus)
+        return f"+{bonus}"
     else:
         return str(bonus)
 
@@ -279,13 +287,17 @@ def possessive(*name):
 
 
 def include(include_type, filename):
-    global include_functions
+    global include_functions, unquoted_include_functions
     if include_type in include_functions:
         return "\\begin{quote}" + include_functions[include_type](filename) + "\\end{quote}"
+    elif include_type in unquoted_include_functions:
+        return NEWLINE + LINEBREAK + unquoted_include_functions[include_type](filename)
     return ""
 
 
-def percent():
+def percent(*values):
+    if len(values) > 0:
+        return f"{sum(*values)}\\%"
     return "\\%"
 
 
@@ -303,9 +315,15 @@ def _format_and_execute(field, params):
     in_string_block = False
     arg_text = ""
     function_name = ""
+    escaping = False
     # the extra space at the end of field causes the last argument to be processed
     for char in field + " ":
-        if char == "<":
+        if escaping:
+            arg_text += char
+            escaping = False
+        elif char == "\\":
+            escaping = True
+        elif char == "<":
             in_string_block = True
         elif char == ">":
             in_string_block = False
@@ -320,7 +338,7 @@ def _format_and_execute(field, params):
                 elif arg_text in ["f", "F", "false", "False"]:
                     arg_text = "False"
                 elif not arg_text.isdigit():
-                    arg_text = "\"" + arg_text + "\""
+                    arg_text = f'"{arg_text}"'
                 formatted_field += arg_text
                 arg_text = ""
             else:
@@ -347,8 +365,17 @@ def eval_string(string, params):
     field_started = False
     indentation_level = 0
     nested = False
+    escaping = False
     for char in string:
-        if char == "[":
+        if escaping:
+            if field_started:
+                field += "\\" + char
+            else:
+                updated_string += char
+            escaping = False
+        elif char == "\\":
+            escaping = True
+        elif char == "[":
             if field_started:
                 indentation_level += 1
                 nested = True
@@ -375,13 +402,13 @@ def eval_string(string, params):
 
 # returns CR with XP value
 def cr(cr):
-    return str(cr) + " (" + CR_TO_XP[cr] + " XP)"
+    return f"{cr} ({CR_TO_XP[cr]} XP)"
 
 
 # returns in the form of "DC challenge Ability (Skill) check"
 def check(dc, *skill):
     skill = _separate(skill)
-    return "DC " + str(dc) + " " + ABILITIES_SPELLOUT[SKILL_ABILITY[skill]] + " (" + SKILL_PRETTYNAME[skill] + ") check"
+    return f"DC {dc} {ABILITIES_SPELLOUT[SKILL_ABILITY[skill]]} ({SKILL_PRETTYNAME[skill]}) check"
 
 
 # similar to the save function, but with a skill
@@ -390,7 +417,7 @@ def opposedcheck(ability, abilitybonus, profbonus):
     ability_name = ""
     if ability != "w/none":
         ability_name = ABILITIES_SPELLOUT[ability[2:]] + " "
-    return "DC " + str(dc) + " " + ability_name + "check"
+    return f"DC {dc} {ability_name}check"
 
 
 # returns in the form of "DC challenge Ability saving throw"
@@ -399,7 +426,7 @@ def save(ability, abilitybonus, profbonus):
     ability_name = ""
     if ability != "w/none":
         ability_name = ABILITIES_SPELLOUT[ability[2:]] + " "
-    return "DC " + str(dc) + " " + ability_name + "saving throw"
+    return f"DC {dc} {ability_name}saving throw"
 
 
 # returns in the form of "DC challenge Ability saving throw"
@@ -407,7 +434,7 @@ def basicsave(ability, difficulty):
     ability_name = ""
     if ability != "w/none":
         ability_name = ABILITIES_SPELLOUT[ability[2:]] + " "
-    return "DC " + str(difficulty) + " " + ability_name + "saving throw"
+    return f"DC {difficulty} {ability_name}saving throw"
 
 
 def _score_to_bonus(score):
@@ -416,4 +443,28 @@ def _score_to_bonus(score):
 
 # returns in the form of "score (bonus)"
 def stat(score):
-    return str(score) + " (" + format_bonus(_score_to_bonus(score)) + ")"
+    return f"{score} ({format_bonus(_score_to_bonus(score))})"
+
+
+def bonus(score):
+    return str(_score_to_bonus(score))
+
+
+def damage(*amount):
+    string = ""
+    diceroll = []
+    for i in amount:
+        if type(i) == int:
+            diceroll.append(i)
+        else:
+            if len(diceroll) > 0:
+                if len(diceroll) > 1:
+                    string += roll(*diceroll)
+                else:
+                    string += str(diceroll[0])
+                diceroll = []
+            if i == "+":
+                string += " plus "
+            else:
+                string += f" {i} damage"
+    return string
